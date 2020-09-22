@@ -1,10 +1,11 @@
 from requests import get
 from base64 import b64encode
 from urllib.parse import quote
+from classes import dhcp_client
 import re
 
-class Instance(object):	
-	def __init__(self, gateway, username, password):
+class Instance:
+	def __init__(self, gateway='192.168.0.1', username='admin', password='admin'):
 		self.auth = dict()
 		self.username = username
 		self.password = password
@@ -61,12 +62,11 @@ class Instance(object):
 				'bytes_curr': line[6]
 				})
 		return stat
-		
-	def SystemReboot(self):
-		get("http://192.168.0.1/userRpm/SysRebootRpm.htm?Reboot=Reboot", headers=self.auth)
-	
-	def resetStat(self):
-		get("http://192.168.0.1/userRpm/SystemStatisticRpm.htm?DeleteAll=All", headers=self.auth)	
-		
-	def test(self, url):
-		return get(url, headers=self.auth)
+
+	def returnGET(self, url='http://192.168.0.1/userRpm/AssignedIpAddrListRpm.htm'):
+		x = get(url, headers=self.auth)
+		return x
+
+	def test(self, mac='D0-53-49-11-EB-75', ip='192.168.0.1', permip='192.168.0.100'):
+		x = dhcp_client(self.auth, self.gateway, mac, ip)
+		x.assignPermanentIp(permip)

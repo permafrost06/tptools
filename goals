@@ -1,0 +1,5 @@
+dhcp settings
+dhcp clients
+|---> get client name, ip, mac, time
+|---> reserve ip by mac
+      |---> edit reservation

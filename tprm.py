@@ -1,41 +1,20 @@
-from requests import get
 from time import sleep
-from hurry.filesize import size
-from helpers import auth, macresolve, ipresolve, resetStat, stat
+from tptools import Instance
 import os
+from helper import get_
 
-# variables for username, password, and gateway/referer
-tplink = '192.168.0.1'
-user = 'admin'
-password = 'admin'
+x = Instance("192.168.0.1", "admin", "admin")
 
-# check otherusers.py if above three variables are different and require input
+resolve = x.ipresolver()
 
-# variables for "Statistics" and "DHCP Clients List" pages' addresses
-url_stat = 'http://{}/userRpm/SystemStatisticRpm.htm'
-url_ip = 'http://{}/userRpm/AssignedIpAddrListRpm.htm'
-
-# create authentication header
-auth = auth(user, password, tplink)
-
-# prepares "DHCP Clients List" url to create MAC resolver
-url = url_ip.format(tplink)
-
-resolve = ipresolve(url, auth)
-
-# delete current statistics data
-
-resetStat(auth)
+x.resetStat()
 
 # run inifnitely
 while True:
 	os.system('cls')
-	# prepares "Statistics" url for fetching speed data
-	url = url_stat.format(tplink)
-	
 	# splits the data until only the required ones remain
-	r = stat(auth)
+	r = x.stat()
 	for item in r:
-		print(item["mac"] + " " + resolve[item["ip"]] + " " + item["bytes_total"] + " " + item["bytes_curr"])
+		print(item["mac"] + " " + resolve[item["ip"]] + " " + get_(int(item["bytes_curr"]))+"ps")
 	# delay
 	sleep(1)

@@ -1,0 +1,6 @@
+print("Enter router gateway: ", end="")
+tplink = input()
+print("username: ", end="")
+user = input()
+print("password: ", end="")
+password = input()

@@ -1,50 +1,41 @@
 from requests import get
-from base64 import b64encode
-from urllib.parse import quote
 from time import sleep
 from hurry.filesize import size
+from helpers import auth, macresolve, ipresolve, resetStat, stat
 import os
-import re
 
+# variables for username, password, and gateway/referer
 tplink = '192.168.0.1'
 user = 'admin'
 password = 'admin'
+
+# check otherusers.py if above three variables are different and require input
+
+# variables for "Statistics" and "DHCP Clients List" pages' addresses
 url_stat = 'http://{}/userRpm/SystemStatisticRpm.htm'
 url_ip = 'http://{}/userRpm/AssignedIpAddrListRpm.htm'
 
-def SaveToFile(text, filename):
-	file = open(filename, "w")
-	file.write(text)
+# create authentication header
+auth = auth(user, password, tplink)
 
-auth_bytes = bytes(user+':'+password, 'utf-8')
-auth_b64_bytes = b64encode(auth_bytes)
-auth_b64_str = str(auth_b64_bytes, 'utf-8')
-
-auth_str = quote('Basic {}'.format(auth_b64_str))
-
-auth = {
-'Referer': 'http://'+tplink+'/', 
-'Authorization': auth_str,
-}
-
-resolve = dict()
-
+# prepares "DHCP Clients List" url to create MAC resolver
 url = url_ip.format(tplink)
-r = get(url, headers=auth)
-ret = r.text.split("var DHCPDynList = new Array(")[1].split("0,0 );")[0].rstrip("\n")
-ret = re.finditer(".*[,]\n.*[,]\n.*[,]\n.*[,]", ret)
-for item in ret:
-	new = item.group(0).split(",\n")
-	resolve[new[1]] = new[0]
-	
-get("http://192.168.0.1/userRpm/SystemStatisticRpm.htm?DeleteAll=All", headers=auth)
 
+resolve = ipresolve(url, auth)
+
+# delete current statistics data
+
+resetStat(auth)
+
+# run inifnitely
 while True:
 	os.system('cls')
+	# prepares "Statistics" url for fetching speed data
 	url = url_stat.format(tplink)
-	r = get("http://192.168.0.1/userRpm/SystemStatisticRpm.htm", headers=auth).text.split("var statList = new Array(\n")[1].split("0,0 );")[0].split("\n")
-	for line in r:
-		if line != "":
-			line = line.split(",")
-			print(line[1] + " " + resolve[line[2]] + " " + line[4] + " " + line[6])
+	
+	# splits the data until only the required ones remain
+	r = stat(auth)
+	for item in r:
+		print(item["mac"] + " " + resolve[item["ip"]] + " " + item["bytes_total"] + " " + item["bytes_curr"])
+	# delay
 	sleep(1)
